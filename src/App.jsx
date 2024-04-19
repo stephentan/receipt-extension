@@ -1,13 +1,11 @@
-import {useEffect, useState} from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
+import {useEffect, useState} from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
   const [image, setImage] = useState();
-
 
   const getCurrentTab = async () => {
     let queryOptions = {active: true, lastFocusedWindow: true};
@@ -17,50 +15,59 @@ function App() {
   };
 
   const onclick = async () => {
-
     const tab = await getCurrentTab();
-    console.log('tab:', tab);
+    console.log("tab:", tab);
     chrome.tabs.sendMessage(
       tab.id || 0,
       {action: "PING"},
-      (response) => {
+      async (response) => {
         console.log("response.title:", response);
+        const data = await fetch("http://localhost:3000/testapi", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(response),
+        });
+        const blob = await data.blob();
+        const file = new Blob([blob], {type: "application/pdf"});
+        const fileURL = URL.createObjectURL(file);
+        window.open(fileURL);
       }
     );
-
-    // let [tab] = await chrome.tabs.query({active: true});
-    // chrome.scripting.executeScript({
-    //   target: {tabId: tab.id},
-    //   func: () => {
-    //     // alert('hey');
-    //     console.log('document:', document.body);
-    //     document.body.style.backgroundColor = 'red';
-    //     const test = document.getElementsByClassName('shopee-button');
-    //     console.log('test!!!', test);
-
-
-    //   }
-    // })
+  };
+  const getOrderDetails = async () => {
+    const tab = await getCurrentTab();
+    console.log("tab:", tab);
+    chrome.tabs.sendMessage(
+      tab.id || 0,
+      {action: "LOAD_ORDER"},
+      async (response) => {
+        console.log("response:", response);
+        //  console.log("response.title:", response);
+        //  const data = await fetch('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf');
+        //  const blob = await data.blob();
+        //  const file = new Blob([blob], {type: 'application/pdf'});
+        //  const fileURL = URL.createObjectURL(file);
+        //  window.open(fileURL);
+        console.log("response.title:", response);
+        const data = await fetch("http://localhost:3000/testapi", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(response),
+        });
+        const blob = await data.blob();
+        const file = new Blob([blob], {type: "application/pdf"});
+        const fileURL = URL.createObjectURL(file);
+        window.open(fileURL);
+      }
+    );
   }
-
-  // useEffect(async() => {
-  //   let [tab] = await chrome.tabs.query({active: true});
-  //   chrome.scripting.executeScript({
-  //     target: {tabId: tab.id},
-  //     func: (setImage) => {
-  //       // alert('hey');
-  //       console.log('document:', document.body);
-  //       const test = document.getElementsByClassName('shopee-button');
-  //       console.log('test', test);
-  //       console.log('url: ', window.location.href);
-  //       const imageLink = document.getElementsByClassName('gallery-preview-panel__image');
-  //       console.log('imageLink:', imageLink[0].src);
-  //       console.log('setImage:', setImage);
-  //       setImage(imageLink[0].src)
-  //     },
-  //     args: [ setImage ]
-  //   })
-  // }, [])
+  useEffect(() => {
+    getOrderDetails();
+  }, [])
   return (
     <>
       <div>
@@ -73,10 +80,46 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+
+        <button
+          onClick={async () => {
+            getOrderDetails();
+          }}
+        >
+          Reload Order Details
         </button>
-        <button onClick={onclick}> On Click</button>
+
+        <button
+          onClick={async () => {
+            const myHeaders = new Headers();
+            myHeaders.append(
+              "Content-Type",
+              "application/x-www-form-urlencoded"
+            );
+
+            const urlencoded = new URLSearchParams();
+            urlencoded.append("data", "{test: 'abc'}");
+
+            const requestOptions = {
+              method: "POST",
+              headers: myHeaders,
+              body: urlencoded,
+              redirect: "follow",
+            };
+
+            const result = await fetch(
+              "http://localhost:3000/testapi",
+              requestOptions
+            );
+            const blob = await result.blob();
+
+            const file = new Blob([blob], {type: "application/pdf"});
+            const fileURL = URL.createObjectURL(file);
+            window.open(fileURL);
+          }}
+        >
+          Click click
+        </button>
         <p>
           Edit <code>src/App.jsx</code> and save to test HMR
         </p>
@@ -85,7 +128,7 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
