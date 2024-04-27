@@ -1,4 +1,4 @@
-console.log("Starting Receipt Printer v1.0");
+console.log("Starting Receipt Printer v1.1");
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   console.log("msg: ", message, " sender: ", sender);
